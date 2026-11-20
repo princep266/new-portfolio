@@ -1,0 +1,81 @@
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
+
+export const CustomCursor: React.FC = () => {
+  const [mousePosition, setMousePosition] = useState({ x: -100, y: -100 });
+  const [isHovered, setIsHovered] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    // Only enable on desktop pointer devices
+    const isTouch = window.matchMedia("(pointer: coarse)").matches;
+    if (isTouch) return;
+
+    const updateMousePosition = (e: MouseEvent) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+      if (!isVisible) setIsVisible(true);
+    };
+
+    const handleMouseOver = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target?.tagName === "BUTTON" ||
+        target?.tagName === "A" ||
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        target?.closest("button") ||
+        target?.closest("a") ||
+        target?.getAttribute("role") === "button"
+      ) {
+        setIsHovered(true);
+      } else {
+        setIsHovered(false);
+      }
+    };
+
+    const handleMouseLeave = () => {
+      setIsVisible(false);
+    };
+
+    window.addEventListener("mousemove", updateMousePosition);
+    window.addEventListener("mouseover", handleMouseOver);
+    document.addEventListener("mouseleave", handleMouseLeave);
+
+    return () => {
+      window.removeEventListener("mousemove", updateMousePosition);
+      window.removeEventListener("mouseover", handleMouseOver);
+      document.removeEventListener("mouseleave", handleMouseLeave);
+    };
+  }, [isVisible]);
+
+  if (!isVisible) return null;
+
+  return (
+    <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden transition-opacity duration-300">
+      {/* Central pointer dot */}
+      <motion.div
+        className="fixed top-0 left-0 h-2.5 w-2.5 rounded-full bg-cyan-400 shadow-[0_0_10px_#22d3ee]"
+        animate={{
+          x: mousePosition.x - 5,
+          y: mousePosition.y - 5,
+          scale: isHovered ? 1.5 : 1,
+        }}
+        transition={{ type: "spring", damping: 30, stiffness: 400, mass: 0.1 }}
+      />
+
+      {/* Trailing follower halo */}
+      <motion.div
+        className="fixed top-0 left-0 h-8 w-8 rounded-full border border-blue-400/50 bg-blue-500/10"
+        animate={{
+          x: mousePosition.x - 16,
+          y: mousePosition.y - 16,
+          scale: isHovered ? 1.8 : 1,
+          borderColor: isHovered ? "rgba(34, 211, 238, 0.8)" : "rgba(96, 165, 250, 0.4)",
+        }}
+        transition={{ type: "spring", damping: 25, stiffness: 200, mass: 0.2 }}
+      />
+    </div>
+  );
+};
